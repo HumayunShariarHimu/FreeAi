@@ -1,0 +1,17 @@
+{
+  "name": "freeai-proxy",
+  "version": "1.0.0",
+  "description": "FreeAI — Universal AI Workbench with CORS proxy",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^2.6.7"
+  },
+  "author": "Humayun Shariar Himu",
+  "license": "MIT"
+}
