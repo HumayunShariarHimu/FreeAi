@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="bn">
 <head>
@@ -3221,13 +3220,12 @@
             'use strict';
 
             /* ======================================================================
-               CONSTANTS — UPDATED TO USE PROXY
+               CONSTANTS
                ====================================================================== */
-            // All API calls now go through the local proxy server
-            const HF_INFER = '/api/hf/';           // Proxy → https://api-inference.huggingface.co/models/
-            const HF_ROUTER = '/api/hf/';          // Proxy → https://router.huggingface.co/hf-inference/models/
-            const HF_HUB = '/api/hub/';            // Proxy → https://huggingface.co/api/models
-            const HF_WHOAMI = '/api/hub/whoami-v2'; // Proxy → https://huggingface.co/api/whoami-v2
+            const HF_INFER = 'https://api-inference.huggingface.co/models/';
+            const HF_ROUTER = 'https://router.huggingface.co/hf-inference/models/';
+            const HF_HUB = 'https://huggingface.co/api/models';
+            const HF_WHOAMI = 'https://huggingface.co/api/whoami-v2';
 
             const THEMES = [
                 { id: 'neon', label: 'Neon', c: ['#8b6bff', '#5b7cff', '#22d3ee'] },
@@ -3588,7 +3586,7 @@
                 const token = $('#tokenInput').value.trim();
                 const btn = $('#loginBtn');
                 const err = $('#loginError');
-                if (!isTokenShaped(token)) { err.textContent = 'একটি বৈধ Hugging Face Token দিন।';
+                if (!isTokenShaped(token)) { err.textContent = 'একটি বৈধ Hugging Face Token দিন。';
                     return; }
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner"></span> Verifying…';
@@ -3629,12 +3627,12 @@
             }
 
             /* ======================================================================
-               HF HUB API  (model search / metadata) — via proxy
+               HF HUB API  (model search / metadata)
                ====================================================================== */
             async function fetchModelInfo(modelId) {
                 if (state.modelCache[modelId]) return state.modelCache[modelId];
                 try {
-                    const resp = await fetch(HF_HUB + modelId, { headers: authHeaders() });
+                    const resp = await fetch(HF_HUB + '/' + modelId, { headers: authHeaders() });
                     if (!resp.ok) return null;
                     const data = await resp.json();
                     state.modelCache[modelId] = data;
@@ -3649,7 +3647,7 @@
                 params.set('sort', sort === 'created' ? 'createdAt' : (sort === 'modified' ? 'lastModified' : sort));
                 params.set('direction', '-1');
                 params.set('limit', String(limit));
-                if (offset) params.set('offset', String(offset));
+                if (offset) params.set('offset', String(offset)); // hub API mostly ignores offset but kept for forward-compat
                 try {
                     const resp = await fetch(HF_HUB + '?' + params.toString(), { headers: authHeaders() });
                     if (!resp.ok) return [];
@@ -3658,7 +3656,7 @@
             }
 
             /* ======================================================================
-               HF INFERENCE API  (the Request Builder / Response Parser engines) — via proxy
+               HF INFERENCE API  (the Request Builder / Response Parser engines)
                ====================================================================== */
             async function callHF(model, payload, binary = false) {
                 const url = HF_INFER + encodeURI(model);
@@ -3749,7 +3747,7 @@
             function dataURLtoBase64(durl) { return (durl.split(',')[1] || ''); }
 
             /* ======================================================================
-               RENDER ENGINE — shared UI builders (identical to original)
+               RENDER ENGINE — shared UI builders
                ====================================================================== */
             function renderOutputBlock(result) {
                 if (result.type === 'text') {
@@ -3832,7 +3830,7 @@
                 const f = FAMILIES[family];
                 body.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">' + (f?.icon ||
                     'smart_toy') + '</span>' +
-                    '<h3>' + (f?.label || 'Studio') + '-এ স্বাগতম</h3><p>একটি মডেল বেছে নিন এবং নিচে ইনপুট দিয়ে রান করুন — FreeAI স্বয়ংক্রিয়ভাবে এই Task-এর জন্য উপযুক্ত Request তৈরি করবে।</p></div>';
+                    '<h3>' + (f?.label || 'Studio') + '-এ স্বাগতম</h3><p>একটি মডেল বেছে নিন এবং নিচে ইনপুট দিয়ে রান করুন — FreeAI স্বয়ংক্রিয়ভাবে এই Task-এর জন্য উপযুক্ত Request তৈরি করবে。</p></div>';
             }
 
             /* model-card markup, reused by home/explorer/side panel */
@@ -3897,7 +3895,7 @@
             }
 
             /* ======================================================================
-               STUDIO — the dynamic Task Engine (identical to original)
+               STUDIO — the dynamic Task Engine (input builder + run handler)
                ====================================================================== */
             const lastModelByFamily = Object.assign({}, storage.get('lastModelByFamily', {}));
             let studioFullscreen = false;
@@ -4273,6 +4271,7 @@
                             if (famId === 'chat' || famId === 'code') {
                                 const hist = (state.sessions[famId] || []).filter(m => true);
                                 const plainHist = [];
+                                // rebuild plain text roles for prompt construction (strip html for previous turns)
                                 hist.forEach(m => {
                                     const tmp = document.createElement('div');
                                     tmp.innerHTML = m.content;
@@ -4424,7 +4423,7 @@
                     const chatModel = lastModelByFamily.chat || FAMILIES.chat.default;
                     chatPrev.innerHTML = '<div class="row1"><div class="ic">' + modelInitials(chatModel) +
                         '</div><div class="name">' + escapeHtml(shortModel(chatModel)) + '</div></div>' +
-                        '<div style="font-size:11.5px;color:var(--text-2);margin-top:8px;line-height:1.5;">আপনার সর্বশেষ Chat সেশন চালিয়ে যান অথবা নতুন একটি কথোপকথন শুরু করুন — যেকোনো Hugging Face মডেলের সাথে।</div>';
+                        '<div style="font-size:11.5px;color:var(--text-2);margin-top:8px;line-height:1.5;">আপনার সর্বশেষ Chat সেশন চালিয়ে যান অথবা নতুন একটি কথোপকথন শুরু করুন — যেকোনো Hugging Face মডেলের সাথে。</div>';
                     chatPrev.onclick = () => openStudio('chat');
                 }
                 const modelCard = $('#homeModelCard');
@@ -4533,7 +4532,7 @@
                     state.explorer.done = true;
                     if (reset && grid) {
                         grid.innerHTML =
-                            '<div class="empty-block" style="grid-column:1/-1;"><span class="material-symbols-outlined">search_off</span><h3>কোনো মডেল পাওয়া যায়নি</h3><p>ভিন্ন কিছু সার্চ করে দেখুন বা ফিল্টার বদলান।</p></div>';
+                            '<div class="empty-block" style="grid-column:1/-1;"><span class="material-symbols-outlined">search_off</span><h3>কোনো মডেল পাওয়া যায়নি</h3><p>ভিন্ন কিছু সার্চ করে দেখুন বা ফিল্টার বদলান。</p></div>';
                     }
                     if (loadMore) loadMore.textContent = '';
                     state.explorer.loading = false;
@@ -4595,7 +4594,7 @@
                 if (!list) return;
                 if (state.history.length === 0) {
                     list.innerHTML =
-                        '<div class="empty-block"><span class="material-symbols-outlined">history</span><h3>এখনো কোনো History নেই</h3><p>কোনো Task রান করলে তা স্বয়ংক্রিয়ভাবে এখানে সংরক্ষিত হবে।</p></div>';
+                        '<div class="empty-block"><span class="material-symbols-outlined">history</span><h3>এখনো কোনো History নেই</h3><p>কোনো Task রান করলে তা স্বয়ংক্রিয়ভাবে এখানে সংরক্ষিত হবে。</p></div>';
                     return;
                 }
                 list.innerHTML = state.history.map(h => {
@@ -4633,7 +4632,7 @@
                 if (!grid) return;
                 if (state.favorites.length === 0) {
                     grid.innerHTML =
-                        '<div class="empty-block" style="grid-column:1/-1;"><span class="material-symbols-outlined">star</span><h3>এখনো কোনো Favorite নেই</h3><p>যেকোনো মডেল কার্ডের ⭐ আইকনে ক্লিক করে Favorite করুন।</p></div>';
+                        '<div class="empty-block" style="grid-column:1/-1;"><span class="material-symbols-outlined">star</span><h3>এখনো কোনো Favorite নেই</h3><p>যেকোনো মডেল কার্ডের ⭐ আইকনে ক্লিক করে Favorite করুন。</p></div>';
                     return;
                 }
                 grid.innerHTML = state.favorites.map(id => {
@@ -4668,7 +4667,7 @@
                 if (!list) return;
                 if (state.collections.length === 0) {
                     list.innerHTML =
-                        '<div class="empty-block"><span class="material-symbols-outlined">folder</span><h3>এখনো কোনো Collection নেই</h3><p>পছন্দের মডেলগুলো একসাথে গ্রুপ করতে একটি নতুন Collection তৈরি করুন।</p></div>';
+                        '<div class="empty-block"><span class="material-symbols-outlined">folder</span><h3>এখনো কোনো Collection নেই</h3><p>পছন্দের মডেলগুলো একসাথে গ্রুপ করতে একটি নতুন Collection তৈরি করুন。</p></div>';
                     return;
                 }
                 list.innerHTML = state.collections.map(c =>
@@ -4707,7 +4706,7 @@
                 if (recent) {
                     if (state.history.length === 0) {
                         recent.innerHTML =
-                            '<div class="empty-block"><span class="material-symbols-outlined">workspaces</span><h3>এখনো কোনো অ্যাক্টিভিটি নেই</h3><p>কোনো Task রান করলে তা এখানে প্রদর্শিত হবে।</p></div>';
+                            '<div class="empty-block"><span class="material-symbols-outlined">workspaces</span><h3>এখনো কোনো অ্যাক্টিভিটি নেই</h3><p>কোনো Task রান করলে তা এখানে প্রদর্শিত হবে。</p></div>';
                     } else {
                         recent.innerHTML = state.history.slice(0, 8).map(h => {
                             const fam = FAMILIES[h.family] || FAMILIES.generic;
@@ -4734,7 +4733,7 @@
                 if (!grid) return;
                 if (state.prompts.length === 0) {
                     grid.innerHTML =
-                        '<div class="empty-block" style="grid-column:1/-1;"><span class="material-symbols-outlined">library_books</span><h3>এখনো কোনো Prompt সেভ নেই</h3><p>Studio-তে "Save Prompt" বাটনে ক্লিক করে আপনার পছন্দের Prompt সংরক্ষণ করুন।</p></div>';
+                        '<div class="empty-block" style="grid-column:1/-1;"><span class="material-symbols-outlined">library_books</span><h3>এখনো কোনো Prompt সেভ নেই</h3><p>Studio-তে "Save Prompt" বাটনে ক্লিক করে আপনার পছন্দের Prompt সংরক্ষণ করুন。</p></div>';
                     return;
                 }
                 grid.innerHTML = state.prompts.map(p => {
@@ -4778,7 +4777,7 @@
                     '<select class="compare-model-select" data-idx="' + i + '"><option value="' + escapeHtml(
                         m) + '">' + escapeHtml(shortModel(m)) + '</option></select></div>' +
                     '<div class="out text-muted" id="compareOut' + i +
-                    '">প্রম্পট লিখে Run Comparison চাপুন।</div>' +
+                    '">প্রম্পট লিখে Run Comparison চাপুন。</div>' +
                     '<div class="timing" id="compareTiming' + i +
                     '"><span>—</span><span>—</span></div></div>'
                 ).join('');
@@ -5045,7 +5044,7 @@
                 $('#settingsLogoutBtn')?.addEventListener('click', handleLogout);
                 $('#settingsClearBtn')?.addEventListener('click', () => {
                     if (!confirm(
-                        'সব Local ডাটা (History, Favorites, Prompts, Collections, Sessions) মুছে ফেলবেন? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।'
+                        'সব Local ডাটা (History, Favorites, Prompts, Collections, Sessions) মুছে ফেলবেন? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না。'
                         )) return;
                     ['history', 'favorites', 'collections', 'prompts', 'sessions', 'lastModelByFamily',
                         'params'
